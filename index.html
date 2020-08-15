@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+		<title>Morse Code Practice</title>
+		<style type="text/css">
+			html, body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+			}
+			.grid-container {
+				padding-top: 1%;
+				padding-left: 1%;
+				padding-right: 1%;
+				padding-bottom: 0;
+				height: 100%;
+				display: grid;
+				grid-template-areas:
+					" led    led    led "
+					" hint   answer new "
+					" output output output "
+					" about  about  about "
+					;
+				grid-template-columns: 1fr 1fr 1fr;
+				grid-template-rows: 1fr 1fr 1fr 1.5fr;
+				column-gap: 1%;
+				row-gap: 1%;
+			}
+			#led {
+				grid-area: led;
+			}
+			.dim {
+				background-color: #AA0;
+				border: solid 3px black;
+			}
+			.lit {
+				background-color: #FF0;
+				border: solid 3px black;
+			}
+			#show-hint {
+				grid-area: hint;
+				font-size: min(5vw, 8vh);
+			}
+			#show-answer {
+				grid-area: answer;
+				font-size: min(5vw, 8vh);
+			}
+			#new-word {
+				grid-area: new;
+				font-size: min(5vw, 8vh);
+			}
+			#output-area {
+				display: flex;
+				align-items:center;
+				justify-content:center;
+				grid-area: output;
+				white-space: pre;
+				border: solid 1px black;
+				font-size: min(12vw, 14vh);
+				overflow: hidden;
+			}
+			#about {
+				grid-area: about;
+				font-size: min(4vw, 2vh);
+				overflow: auto;
+			}
+			#about h1 {
+				font-size: min(8vw, 4vh);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="grid-container">
+			<div id="led" class="dim">&nbsp;</div>
+			<button id="show-hint" class="btn btn-warning">Show Hint</button> <button id="show-answer" class="btn btn-primary">Show Answer</button> <button id="new-word" class="btn btn-secondary">New Word</button>
+			<div id="output-area"></div>
+			<div id="about">
+				<h1>What is this?</h1>
+				<p>This program is intended to help you practice reading Morse code. To actually <em>learn</em> Morse Code, I recommend <a href="https://morse.withgoogle.com/learn/" rel="noopener noreferrer" target="_blank">https://morse.withgoogle.com/learn/</a>.</p>
+				<p>This program will select a random word, and start blinking the big yellow LED at the top of the screen to communicate the word in morse. It will keep blinking at word in a loop forever. When you think you know what the word says, click "Show Answer" to check if you were right. If you need a hint, click "Show Hint" which will show the word as a series of dots and dashes. Note that the program starts you at some random location in the morse code sequence (not necessarily always at the start of the word). So the very first dot or dash you see might not be part of the first letter. In fact, it might not even be the first dot or dash within a given letter&mdash;you might have started in the middle of a letter!</p>
+				<p>After confirming whether you got the right answer or not, click "New Word" to get a new word and play again!</p>
+				<p>This app was created by NebuPookins &copy; 2020.</p>
+			</div>
+		</div>
+
+		<!-- Optional JavaScript -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+		<script type="text/javascript">
+			(function() {
+				'use strict';
+				const fiveLetterWords = [
+"about",
+"above",
+"abuse",
+"actor",
+"acute",
+"admit",
+"adopt",
+"adult",
+"after",
+"again",
+"agent",
+"agree",
+"ahead",
+"alarm",
+"album",
+"alert",
+"alike",
+"alive",
+"allow",
+"alone",
+"along",
+"alter",
+"among",
+"anger",
+"angle",
+"angry",
+"apart",
+"apple",
+"apply",
+"arena",
+"argue",
+"arise",
+"array",
+"aside",
+"asset",
+"audio",
+"audit",
+"avoid",
+"award",
+"aware",
+"badly",
+"baker",
+"bases",
+"basic",
+"basis",
+"beach",
+"began",
+"begin",
+"begun",
+"being",
+"below",
+"bench",
+"billy",
+"birth",
+"black",
+"blame",
+"blind",
+"block",
+"blood",
+"board",
+"boost",
+"booth",
+"bound",
+"brain",
+"brand",
+"bread",
+"break",
+"breed",
+"brief",
+"bring",
+"broad",
+"broke",
+"brown",
+"build",
+"built",
+"buyer",
+"cable",
+"calif",
+"carry",
+"catch",
+"cause",
+"chain",
+"chair",
+"chart",
+"chase",
+"cheap",
+"check",
+"chest",
+"chief",
+"child",
+"china",
+"chose",
+"civil",
+"claim",
+"class",
+"clean",
+"clear",
+"click",
+"clock",
+"close",
+"coach",
+"coast",
+"could",
+"count",
+"court",
+"cover",
+"craft",
+"crash",
+"cream",
+"crime",
+"cross",
+"crowd",
+"crown",
+"curve",
+"cycle",
+"daily",
+"dance",
+"dated",
+"dealt",
+"death",
+"debut",
+"delay",
+"depth",
+"doing",
+"doubt",
+"dozen",
+"draft",
+"drama",
+"drawn",
+"dream",
+"dress",
+"drill",
+"drink",
+"drive",
+"drove",
+"dying",
+"eager",
+"early",
+"earth",
+"eight",
+"elite",
+"empty",
+"enemy",
+"enjoy",
+"enter",
+"entry",
+"equal",
+"error",
+"event",
+"every",
+"exact",
+"exist",
+"extra",
+"faith",
+"false",
+"fault",
+"fiber",
+"field",
+"fifth",
+"fifty",
+"fight",
+"final",
+"first",
+"fixed",
+"flash",
+"fleet",
+"floor",
+"fluid",
+"focus",
+"force",
+"forth",
+"forty",
+"forum",
+"found",
+"frame",
+"frank",
+"fraud",
+"fresh",
+"front",
+"fruit",
+"fully",
+"funny",
+"giant",
+"given",
+"glass",
+"globe",
+"going",
+"grace",
+"grade",
+"grand",
+"grant",
+"grass",
+"great",
+"green",
+"gross",
+"group",
+"grown",
+"guard",
+"guess",
+"guest",
+"guide",
+"happy",
+"harry",
+"heart",
+"heavy",
+"hence",
+"henry",
+"horse",
+"hotel",
+"house",
+"human",
+"ideal",
+"image",
+"index",
+"inner",
+"input",
+"issue",
+"japan",
+"jimmy",
+"joint",
+"jones",
+"judge",
+"known",
+"label",
+"large",
+"laser",
+"later",
+"laugh",
+"layer",
+"learn",
+"lease",
+"least",
+"leave",
+"legal",
+"level",
+"lewis",
+"light",
+"limit",
+"links",
+"lives",
+"local",
+"logic",
+"loose",
+"lower",
+"lucky",
+"lunch",
+"lying",
+"magic",
+"major",
+"maker",
+"march",
+"maria",
+"match",
+"maybe",
+"mayor",
+"meant",
+"media",
+"metal",
+"might",
+"minor",
+"minus",
+"mixed",
+"model",
+"money",
+"month",
+"moral",
+"motor",
+"mount",
+"mouse",
+"mouth",
+"movie",
+"music",
+"needs",
+"never",
+"newly",
+"night",
+"noise",
+"north",
+"noted",
+"novel",
+"nurse",
+"occur",
+"ocean",
+"offer",
+"often",
+"order",
+"other",
+"ought",
+"paint",
+"panel",
+"paper",
+"party",
+"peace",
+"peter",
+"phase",
+"phone",
+"photo",
+"piece",
+"pilot",
+"pitch",
+"place",
+"plain",
+"plane",
+"plant",
+"plate",
+"point",
+"pound",
+"power",
+"press",
+"price",
+"pride",
+"prime",
+"print",
+"prior",
+"prize",
+"proof",
+"proud",
+"prove",
+"queen",
+"quick",
+"quiet",
+"quite",
+"radio",
+"raise",
+"range",
+"rapid",
+"ratio",
+"reach",
+"ready",
+"refer",
+"right",
+"rival",
+"river",
+"robin",
+"roger",
+"roman",
+"rough",
+"round",
+"route",
+"royal",
+"rural",
+"scale",
+"scene",
+"scope",
+"score",
+"sense",
+"serve",
+"seven",
+"shall",
+"shape",
+"share",
+"sharp",
+"sheet",
+"shelf",
+"shell",
+"shift",
+"shirt",
+"shock",
+"shoot",
+"short",
+"shown",
+"sight",
+"since",
+"sixth",
+"sixty",
+"sized",
+"skill",
+"sleep",
+"slide",
+"small",
+"smart",
+"smile",
+"smith",
+"smoke",
+"solid",
+"solve",
+"sorry",
+"sound",
+"south",
+"space",
+"spare",
+"speak",
+"speed",
+"spend",
+"spent",
+"split",
+"spoke",
+"sport",
+"staff",
+"stage",
+"stake",
+"stand",
+"start",
+"state",
+"steam",
+"steel",
+"stick",
+"still",
+"stock",
+"stone",
+"stood",
+"store",
+"storm",
+"story",
+"strip",
+"stuck",
+"study",
+"stuff",
+"style",
+"sugar",
+"suite",
+"super",
+"sweet",
+"table",
+"taken",
+"taste",
+"taxes",
+"teach",
+"teeth",
+"terry",
+"texas",
+"thank",
+"theft",
+"their",
+"theme",
+"there",
+"these",
+"thick",
+"thing",
+"think",
+"third",
+"those",
+"three",
+"threw",
+"throw",
+"tight",
+"times",
+"tired",
+"title",
+"today",
+"topic",
+"total",
+"touch",
+"tough",
+"tower",
+"track",
+"trade",
+"train",
+"treat",
+"trend",
+"trial",
+"tried",
+"tries",
+"truck",
+"truly",
+"trust",
+"truth",
+"twice",
+"under",
+"undue",
+"union",
+"unity",
+"until",
+"upper",
+"upset",
+"urban",
+"usage",
+"usual",
+"valid",
+"value",
+"video",
+"virus",
+"visit",
+"vital",
+"voice",
+"waste",
+"watch",
+"water",
+"wheel",
+"where",
+"which",
+"while",
+"white",
+"whole",
+"whose",
+"woman",
+"women",
+"world",
+"worry",
+"worse",
+"worst",
+"worth",
+"would",
+"wound",
+"write",
+"wrong",
+"wrote",
+"yield",
+"young",
+"youth"
+];
+				function letterToMorse(letter) {
+					switch (letter) {
+						case 'a':
+							return '.-';
+						case 'b':
+							return '-...';
+						case 'c':
+							return '-.-.';
+						case 'd':
+							return '-..';
+						case 'e':
+							return '.';
+						case 'f':
+							return '..-.';
+						case 'g':
+							return '--.';
+						case 'h':
+							return '....';
+						case 'i':
+							return '..';
+						case 'j':
+							return '.---';
+						case 'k':
+							return '-.-';
+						case 'l':
+							return '.-..';
+						case 'm':
+							return '--';
+						case 'n':
+							return '-.';
+						case 'o':
+							return '---';
+						case 'p':
+							return '.--.';
+						case 'q':
+							return '--.-';
+						case 'r':
+							return '.-.';
+						case 's':
+							return '...';
+						case 't':
+							return '-';
+						case 'u':
+							return '..-';
+						case 'v':
+							return '...-';
+						case 'w':
+							return '.--';
+						case 'x':
+							return '-..-';
+						case 'y':
+							return '-.--';
+						case 'z':
+							return '--..';
+						default:
+							throw "Unknown letter " + letter;
+					}
+				}
+
+				function wordToMorse(word) {
+					return word.split('').map(letterToMorse).join(' ') + '  ';
+				}
+
+				function rotateWord(word, index) {
+					return word.substring(index) + word.substring(0, index);
+				}
+
+
+
+				const randomWord = fiveLetterWords[Math.floor(Math.random() * fiveLetterWords.length)];
+				//console.log("randomly chosen word:", randomWord);
+				const morseWord = wordToMorse(randomWord);
+				console.log("word as morse: [", morseWord, "]");
+
+				const rotatedMorseWord = rotateWord(morseWord, Math.floor(Math.random() * morseWord.length));
+				console.log("Rotated morse word: [", rotatedMorseWord, "]")
+
+				const $led = $('#led');
+
+				function lit() {
+					$led.removeClass('dim');
+					$led.addClass('lit');
+				}
+
+				function dim() {
+					$led.removeClass('lit');
+					$led.addClass('dim');
+				}
+
+				let shortTime = 500;
+				
+				
+
+				function flash(morseWord) {
+					let longTime = shortTime * 3;
+					const next = rotateWord(morseWord, 1);
+					console.log("at ", morseWord, "next is", next);
+					switch (morseWord.substring(0, 1)) {
+						case ' ': //pause
+							console.log("pausing between characters");
+							setTimeout(() => {
+								console.log("pausing between characters over");
+								flash(next);
+							}, shortTime * 3);
+							return;
+						case '.': //short
+							console.log("lighting for short");
+							lit();
+							setTimeout(() => {
+								console.log("short over");
+								dim();
+								console.log("pausing after a dit");
+								setTimeout(() => {
+									console.log("pausing after a dit over");
+									flash(next);
+								}, shortTime);
+							}, shortTime);
+							return;
+						case '-': //long
+						console.log("lighting for long");
+						lit();
+							setTimeout(() => {
+								console.log("long over");
+								dim();
+								console.log("pausing after a dat");
+								setTimeout(() => {
+									console.log("pausing after a dat");
+									flash(next);
+								}, shortTime);
+							}, longTime);
+							return;
+						default:
+							throw "Unknown morse symbol:";
+					}
+				}
+				//Initial delay before starting
+				setTimeout(() => {flash(rotatedMorseWord);}, shortTime);
+
+				const $outputArea = $('#output-area')
+				$('#show-hint').on('click', () => { $outputArea.text(rotatedMorseWord); });
+				$('#show-answer').on('click', () => {$outputArea.text(randomWord);} );
+				$('#new-word').on('click', () => { location.reload(); });
+			}());
+		</script>
+	</body>
+</html>
